@@ -1,6 +1,5 @@
 contract;
 
-use std::storage::storage_vec::*;
 use std::storage::storage_map::*;
 use std::storage::storage_string::*;
 use std::hash::Hash;
@@ -28,17 +27,24 @@ abi VotingContract {
     fn get_vote_name() -> String;
 
     #[storage(read, write)]
-    fn vote() -> u64;
+    fn set_vote_image(voteName: String);
 
     #[storage(read)]
-    fn get_votes() -> u64;
+    fn get_vote_image() -> String;
+
+    #[storage(read, write)]
+    fn vote(voteOption: u64) -> u64;
+
+    #[storage(read)]
+    fn get_votes() -> Vec<u64>;
 }
 
 storage {
     voteName: StorageString = StorageString{},
+    voteImage: StorageString = StorageString{},
     voteOptions: StorageMap<u64, str[3]> = StorageMap{},
     optionCount: u64 = 0,
-    votes: u64 = 0
+    votes: StorageMap<u64, u64> = StorageMap{},
 }
 
 impl VotingContract for Contract {
@@ -49,6 +55,7 @@ impl VotingContract for Contract {
         let index = storage.optionCount.read();
         let op: str[3] = from_str_array(optionName).try_as_str_array().unwrap();
         storage.voteOptions.insert(index, op);
+        storage.votes.insert(index, 0);
         storage.optionCount.write(index + 1);
         return index;
 	}
@@ -83,16 +90,39 @@ impl VotingContract for Contract {
         }
     }
 
-
     #[storage(read, write)]
-    fn vote() -> u64 {
-        let incremented = storage.votes.read() + 1;
-        storage.votes.write(incremented);
-        incremented
+    fn set_vote_image(voteImage: String) {
+        storage.voteImage.write_slice(voteImage);
     }
 
     #[storage(read)]
-    fn get_votes() -> u64 {
-        storage.votes.read()
+    fn get_vote_image() -> String {
+        let image = storage.voteImage.read_slice();
+        return match image {
+            Some(image) => {image},
+            None => {String::from_ascii_str("")}
+        }
+    }
+
+
+    #[storage(read, write)]
+    fn vote(voteOption: u64) -> u64 {
+        let mut currentVoteCount: u64 = storage.votes.get(voteOption).try_read().unwrap();
+        currentVoteCount = currentVoteCount + 1;
+        storage.votes.insert(voteOption, currentVoteCount);
+        return currentVoteCount;
+    }
+
+    #[storage(read)]
+    fn get_votes() -> Vec<u64> {
+        let mut  v: Vec<u64> = Vec::new();
+
+        let mut i = 0;
+        while i < storage.optionCount.read() {
+            let voteCount: u64 = storage.votes.get(i).try_read().unwrap();
+            v.push(voteCount);
+            i += 1;
+        }
+        return v;
     }
 }
