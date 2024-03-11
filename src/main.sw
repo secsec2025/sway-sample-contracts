@@ -16,6 +16,12 @@ use std::primitive_conversions::str::*;
 abi VotingContract {
 
     #[storage(read, write)]
+	fn set_voting_enabled(flag: bool) -> bool;
+
+    #[storage(read)]
+	fn get_voting_enabled() -> bool;
+
+    #[storage(read, write)]
 	fn add_vote_option(optionName: str[3]) -> u64;
 
     #[storage(read)]
@@ -44,6 +50,7 @@ abi VotingContract {
 storage {
     //owner: Ownership = Ownership::initialized(Identity::Address(Address::from(0x5facbc0514ffccc4b9743a9150804fa5b62af2ac5e2045c94d6429a4a405d932))),
 
+    isEnabled: bool = false,
     voteName: StorageString = StorageString{},
     voteImage: StorageString = StorageString{},
     voteOptions: StorageMap<u64, str[3]> = StorageMap{},
@@ -53,7 +60,19 @@ storage {
 
 impl VotingContract for Contract {
 
-    
+    #[storage(read, write)]
+	fn set_voting_enabled(flag: bool) -> bool {
+        //storage.owner.only_owner();
+        storage.isEnabled.write(flag);
+        return flag;
+    }
+
+    #[storage(read)]
+	fn get_voting_enabled() -> bool {
+        return storage.isEnabled.read();
+    }
+
+
     #[storage(read, write)]
 	fn add_vote_option(optionName: str[3]) -> u64 {
         //storage.owner.only_owner();
@@ -115,6 +134,7 @@ impl VotingContract for Contract {
 
     #[storage(read, write)]
     fn vote(voteOption: u64) -> u64 {
+        assert(storage.isEnabled.read());
         let mut currentVoteCount: u64 = storage.votes.get(voteOption).try_read().unwrap();
         currentVoteCount = currentVoteCount + 1;
         storage.votes.insert(voteOption, currentVoteCount);
