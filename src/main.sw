@@ -5,6 +5,8 @@ use std::storage::storage_string::*;
 use std::hash::Hash;
 use std::string::String;
 use std::primitive_conversions::str::*;
+//use ownership::*;
+//use src_5::*;
 
 // struct VoteOption {
 //     optionName: str[20],
@@ -40,6 +42,8 @@ abi VotingContract {
 }
 
 storage {
+    //owner: Ownership = Ownership::initialized(Identity::Address(Address::from(0x5facbc0514ffccc4b9743a9150804fa5b62af2ac5e2045c94d6429a4a405d932))),
+
     voteName: StorageString = StorageString{},
     voteImage: StorageString = StorageString{},
     voteOptions: StorageMap<u64, str[3]> = StorageMap{},
@@ -52,6 +56,8 @@ impl VotingContract for Contract {
     
     #[storage(read, write)]
 	fn add_vote_option(optionName: str[3]) -> u64 {
+        //storage.owner.only_owner();
+
         let index = storage.optionCount.read();
         let op: str[3] = from_str_array(optionName).try_as_str_array().unwrap();
         storage.voteOptions.insert(index, op);
@@ -78,6 +84,7 @@ impl VotingContract for Contract {
 
     #[storage(read, write)]
     fn set_vote_name(voteName: String) {
+        //storage.owner.only_owner();
         storage.voteName.write_slice(voteName);
     }
 
@@ -92,6 +99,7 @@ impl VotingContract for Contract {
 
     #[storage(read, write)]
     fn set_vote_image(voteImage: String) {
+        //storage.owner.only_owner();
         storage.voteImage.write_slice(voteImage);
     }
 

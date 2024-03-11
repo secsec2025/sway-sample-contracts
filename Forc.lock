@@ -3,6 +3,19 @@ name = "core"
 source = "path+from-root-B672DC9E3D340CD2"
 
 [[package]]
+name = "ownership"
+source = "git+https://github.com/FuelLabs/sway-libs?tag=v0.13.0#3c6c933cdc538c46abf2be79e6b673f652fa88d1"
+dependencies = [
+    "src_5",
+    "std",
+]
+
+[[package]]
+name = "src_5"
+source = "git+https://github.com/FuelLabs/sway-standards?tag=v0.1.0#47c288557d97853e37793f346281f90d222970cf"
+dependencies = ["std"]
+
+[[package]]
 name = "std"
 source = "git+https://github.com/fuellabs/sway?tag=v0.49.2#a70c746d27b3300beef896ccd1dcce1299836192"
 dependencies = ["core"]
@@ -10,4 +23,8 @@ dependencies = ["core"]
 [[package]]
 name = "voting-contract"
 source = "member"
-dependencies = ["std"]
+dependencies = [
+    "ownership",
+    "src_5",
+    "std",
+]
