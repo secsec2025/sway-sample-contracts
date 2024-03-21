@@ -5,6 +5,9 @@ use std::storage::storage_string::*;
 use std::hash::Hash;
 use std::string::String;
 use std::primitive_conversions::str::*;
+use std::identity::Identity;
+use std::address::Address;
+use std::logging::log;
 //use ownership::*;
 //use src_5::*;
 
@@ -44,6 +47,9 @@ abi VotingContract {
     fn vote(voteOption: u64) -> u64;
 
     #[storage(read)]
+    fn has_voted() -> bool;
+
+    #[storage(read)]
     fn get_votes() -> Vec<u64>;
 }
 
@@ -56,6 +62,7 @@ storage {
     voteOptions: StorageMap<u64, str[3]> = StorageMap{},
     optionCount: u64 = 0,
     votes: StorageMap<u64, u64> = StorageMap{},
+    votedPeople: StorageMap<Address, bool> = StorageMap{},
 }
 
 impl VotingContract for Contract {
@@ -134,11 +141,39 @@ impl VotingContract for Contract {
 
     #[storage(read, write)]
     fn vote(voteOption: u64) -> u64 {
+        // Check if voting is enabled
         assert(storage.isEnabled.read());
+
+        // Get caller address
+        let voter: Identity = msg_sender().unwrap();
+        assert(voter.is_address());
+
+        // Check if this address has already voted
+        assert(storage.votedPeople.get(voter.as_address().unwrap()).try_read().is_none());
+        
+        // Perform vote
         let mut currentVoteCount: u64 = storage.votes.get(voteOption).try_read().unwrap();
         currentVoteCount = currentVoteCount + 1;
         storage.votes.insert(voteOption, currentVoteCount);
+
+        // Mark this address as voted
+        storage.votedPeople.insert(voter.as_address().unwrap(), true);
+
         return currentVoteCount;
+    }
+
+    #[storage(read)]
+    fn has_voted() -> bool {
+        let voter: Identity = msg_sender().unwrap();
+        assert(voter.is_address());
+
+        let mut isVoted: bool = false;
+        if (storage.votedPeople.get(voter.as_address().unwrap()).try_read().is_none()) {
+            isVoted = false;
+        } else {
+            isVoted = true;
+        }
+        return isVoted;
     }
 
     #[storage(read)]
